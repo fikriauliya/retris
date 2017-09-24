@@ -10,7 +10,7 @@
   "sources": [
     {
       "dir": "src",
-      "subdirs": ["async", "interop", "simple"]
+      "subdirs": ["async", "interop", "simple", "retris"]
     }
   ],
   "namespace": true,

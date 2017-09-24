@@ -5,6 +5,7 @@ module.exports = {
     async: './lib/js/src/async/counterRoot.js',
     simple: './lib/js/src/simple/simpleRoot.js',
     interop: './src/interop/interopRoot.js',
+    retris: './lib/js/src/retris/retrisRoot.js',
   },
   output: {
     path: path.join(__dirname, "bundledOutputs"),
