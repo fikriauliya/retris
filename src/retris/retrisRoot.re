@@ -3,6 +3,11 @@ type config = {
   height: int
 };
 
+type position = {
+  x: int,
+  y: int
+};
+
 module Renderer = {
   let print t {width, height} => {
     for i in 0 to (height - 1) {
@@ -18,20 +23,6 @@ module Renderer = {
       Js.log accum;
     };
   };
-};
-
-module Board = {
-  include Renderer;
-  type t = array (array bool);
-
-  let create {width, height} => {
-    Array.make_matrix width height false;
-  };
-};
-
-let config = {
-  width: 10,
-  height: 15
 };
 
 module Tetromino = {
@@ -79,9 +70,61 @@ module Tetromino = {
   };
 };
 
+module Board = {
+  include Renderer;
+  type tetromino = 
+    | Fixed Tetromino.t
+    | Moveable Tetromino.t;
+
+  type t = {
+    blocks: array (array bool),
+    tetrominos: list tetromino,
+  };
+
+  let create {width, height} => {
+    {
+      blocks: Array.make_matrix width height false,
+      tetrominos: []
+    }
+  };
+
+  let in_bound {x, y} {width, height} => {
+    if (x < 0 || y < 0) {
+      false;
+    } else if (x >= width || y >= height) {
+      false;
+    } else {
+      true;
+    }
+  };
+
+  let put {blocks} tetromino {x, y} config => {
+    switch (tetromino) {
+      | Fixed tetromino => 
+          tetromino |> Array.iteri (fun ix m => {
+            m |> Array.iteri (fun iy tet => {
+              let x' = ix + x;
+              let y' = iy + y;
+              if (in_bound {x:x', y:y'} config) {
+                blocks.(x').(y') = blocks.(x').(y') || tet;
+              } else {
+                ();
+              }
+            }
+          )});
+      | Moveable _ => ()
+    };
+  };
+};
+
+let config = {
+  width: 10,
+  height: 15
+};
+
 let () = {
   let board = Board.create config;
-  Board.print board config;
+  Board.print board.blocks config;
   Js.log "";
   let tetrominos = [Tetromino.i_shape (), 
     Tetromino.o_shape (),
@@ -91,5 +134,11 @@ let () = {
   tetrominos |> List.iter (fun t => {
     Tetromino.print t {width: 4, height: 4};
     Js.log "";
-  }) 
+  });
+
+  tetrominos |> List.iter (fun t => {
+    Board.put board (Fixed t) {x: 0, y:-3} config;
+    Board.print board.blocks config;
+    Js.log "";
+  });
 }
