@@ -35,6 +35,7 @@ module Matrix = {
 
   let print m => {
     let width = Array.length m; let height = Array.length m.(0);
+    Js.log ((string_of_int height) ^ " x " ^ (string_of_int width));
 
     for i in 0 to (height - 1) {
       let accum = ref "";
@@ -57,7 +58,7 @@ module Block = {
 
   let to_matrix t => {
     let m = Array.make_matrix 1 2 0;
-    let (x, y) = t; m.(0) = x; m.(1) = y;
+    let (x, y) = t; m.(0) = [|x, y|];
     m;
   };
 
@@ -232,4 +233,7 @@ let () = {
   Matrix.print (Matrix.add Matrix.rotation_matrix Matrix.rotation_matrix); Js.log "";
   Matrix.print (Matrix.substract Matrix.rotation_matrix Matrix.rotation_matrix); Js.log "";
   Matrix.print (Matrix.multiply Matrix.rotation_matrix Matrix.rotation_matrix); Js.log "";
+
+  Matrix.print (Block.to_matrix (2,3)); Js.log "";
+  let (x, y) = Block.from_matrix (Block.to_matrix (2,3)); Js.log (string_of_int x); Js.log (string_of_int y);
 }
