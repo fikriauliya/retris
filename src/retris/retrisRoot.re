@@ -73,7 +73,9 @@ module Block = {
 };
 
 module Renderer = {
-  let print blocks (width, height) => {
+  let print blocks => {
+    let width = Array.length blocks; let height = Array.length blocks.(0);
+    Js.log ((string_of_int height) ^ " x " ^ (string_of_int width));
     for i in 0 to (height - 1) {
       let accum = ref "";
       for j in 0 to (width - 1) {
@@ -99,7 +101,6 @@ module Tetromino = {
 
   type t = {
     blocks: blocks,
-    dimension: dimension,
     klazz: tetromino_type,
     shape: shape,
   };
@@ -113,13 +114,13 @@ module Tetromino = {
         /* 1111 */
         let m = Array.make_matrix 4 4 false;
         m.(0).(3) = true; m.(1).(3) = true; m.(2).(3) = true; m.(3).(3) = true;
-        { blocks: m, dimension: (4, 4), klazz: Moveable, shape };
+        { blocks: m, klazz: Moveable, shape };
       }
       | O => {
         /* 11 */
         /* 11 */
         let m = Array.make_matrix 2 2 true;
-        { blocks: m, dimension: (2, 2), klazz: Moveable, shape };
+        { blocks: m, klazz: Moveable, shape };
       }
       | L => {
         /* 100 */
@@ -127,7 +128,7 @@ module Tetromino = {
         /* 110 */
         let m = Array.make_matrix 3 3 false;
         m.(0).(0) = true; m.(0).(1) = true; m.(0).(2) = true; m.(1).(2) = true; 
-        { blocks: m, dimension: (3, 3), klazz: Moveable, shape };
+        { blocks: m, klazz: Moveable, shape };
       }
       | T => {
         /* 000 */
@@ -135,7 +136,7 @@ module Tetromino = {
         /* 111 */
         let m = Array.make_matrix 3 3 false;
         m.(0).(2) = true; m.(1).(2) = true; m.(2).(2) = true; m.(1).(1) = true; 
-        { blocks: m, dimension: (3, 3), klazz: Moveable, shape };
+        { blocks: m, klazz: Moveable, shape };
       }
       | S => {
         /* 000 */
@@ -143,7 +144,7 @@ module Tetromino = {
         /* 110 */
         let m = Array.make_matrix 3 3 false;
         m.(0).(2) = true; m.(1).(2) = true; m.(1).(1) = true; m.(2).(1) = true; 
-        { blocks: m, dimension: (3, 3), klazz: Moveable, shape };
+        { blocks: m, klazz: Moveable, shape };
       }
     }
   };
@@ -153,7 +154,6 @@ module Board = {
   include Renderer;
   type t = {
     blocks: blocks,
-    dimension: dimension,
     tetrominos: list Tetromino.t
   };
 
@@ -162,12 +162,11 @@ module Board = {
     {
       blocks: Array.make_matrix width height false,
       tetrominos: [],
-      dimension 
     }
   };
 
   let in_bound t ((x, y):position) => {
-    let (width, height) = t.dimension;
+    let (width, height) = (Array.length t.blocks, Array.length t.blocks.(0));
     if (x < 0 || y < 0) {
       false;
     } else if (x >= width || y >= height) {
@@ -193,7 +192,6 @@ module Board = {
             }
           )});
           {
-            ...t,
             blocks: blocks',
             tetrominos: [tetromino, ...t.tetrominos]
           };
@@ -206,7 +204,7 @@ let dimension = (10, 15);
 
 let () = {
   let board = Board.create dimension;
-  Board.print board.blocks dimension;
+  Board.print board.blocks;
   Js.log "";
   let tetrominos = [(Tetromino.create I),
     (Tetromino.create O),
@@ -217,7 +215,7 @@ let () = {
   tetrominos |> List.iter (fun (tetromino: Tetromino.t) => {
     switch (tetromino.klazz) {
       | Fixed | Moveable => {
-        Tetromino.print tetromino.blocks tetromino.dimension;
+        Tetromino.print tetromino.blocks;
         Js.log "";
       };
     };
@@ -225,7 +223,7 @@ let () = {
 
   tetrominos |> List.iter (fun t => {
     let board' = Board.put board t (0, -3);
-    Board.print board'.blocks (board'.dimension);
+    Board.print board'.blocks;
     Js.log "";
   });
 
