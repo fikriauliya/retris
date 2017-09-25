@@ -1,15 +1,13 @@
-type config = {
-  width: int,
-  height: int
-};
+type width = int;
+type height = int;
+type dimension = (width, height);
 
-type position = {
-  x: int,
-  y: int
-};
+type x = int;
+type y = int;
+type position = (x, y);
 
 module Renderer = {
-  let print t {width, height} => {
+  let print t (width, height) => {
     for i in 0 to (height - 1) {
       let accum = ref "";
       for j in 0 to (width - 1) {
@@ -20,7 +18,7 @@ module Renderer = {
         };
         accum := !accum ^ bit;
       };
-      Js.log accum;
+      Js.log !accum;
     };
   };
 };
@@ -81,14 +79,14 @@ module Board = {
     tetrominos: list tetromino,
   };
 
-  let create {width, height} => {
+  let create (width, height) => {
     {
       blocks: Array.make_matrix width height false,
       tetrominos: []
     }
   };
 
-  let in_bound {x, y} {width, height} => {
+  let in_bound ((x, y):position) ((width, height):dimension) => {
     if (x < 0 || y < 0) {
       false;
     } else if (x >= width || y >= height) {
@@ -98,14 +96,14 @@ module Board = {
     }
   };
 
-  let put {blocks} tetromino {x, y} config => {
+  let put {blocks} tetromino ((x, y):position) dimension => {
     switch (tetromino) {
       | Fixed tetromino => 
           tetromino |> Array.iteri (fun ix m => {
             m |> Array.iteri (fun iy tet => {
               let x' = ix + x;
               let y' = iy + y;
-              if (in_bound {x:x', y:y'} config) {
+              if (in_bound (x', y') dimension) {
                 blocks.(x').(y') = blocks.(x').(y') || tet;
               } else {
                 ();
@@ -117,14 +115,11 @@ module Board = {
   };
 };
 
-let config = {
-  width: 10,
-  height: 15
-};
+let dimension = (10, 15);
 
 let () = {
-  let board = Board.create config;
-  Board.print board.blocks config;
+  let board = Board.create dimension;
+  Board.print board.blocks dimension;
   Js.log "";
   let tetrominos = [Tetromino.i_shape (), 
     Tetromino.o_shape (),
@@ -132,13 +127,13 @@ let () = {
     Tetromino.t_shape (),
     Tetromino.s_shape ()];
   tetrominos |> List.iter (fun t => {
-    Tetromino.print t {width: 4, height: 4};
+    Tetromino.print t (4, 4);
     Js.log "";
   });
 
   tetrominos |> List.iter (fun t => {
-    Board.put board (Fixed t) {x: 0, y:-3} config;
-    Board.print board.blocks config;
+    Board.put board (Fixed t) (0, -3) dimension;
+    Board.print board.blocks dimension;
     Js.log "";
   });
 }
