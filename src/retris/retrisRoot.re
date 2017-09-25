@@ -8,6 +8,69 @@ type position = (x, y);
 
 type blocks = array (array bool);
 
+module Matrix = {
+  let multiply x y => {
+    /* https://rosettacode.org/wiki/Matrix_multiplication#OCaml */
+    let x0 = Array.length x;
+    let y0 = Array.length y;
+    let y1 = if (y0 == 0) {
+      0;
+    } else {
+      Array.length y.(0);
+    };
+    let z = Array.make_matrix x0 y1 0;
+    for i in 0 to (x0-1) {
+      for j in 0 to (y1-1) {
+        for k in 0 to (y0-1) {
+          z.(i).(j) = z.(i).(j) + x.(i).(k) * y.(k).(j);
+        }
+      }
+    };
+    z 
+  };
+
+  let negate x => x |> Array.map(fun c => c |> Array.map (fun v => -v));
+  let add x y => x |> Array.mapi (fun ix c => c |> Array.mapi (fun iy v => y.(ix).(iy) + v));
+  let substract x y => add x (negate y);
+
+  let print m => {
+    let width = Array.length m; let height = Array.length m.(0);
+
+    for i in 0 to (height - 1) {
+      let accum = ref "";
+      for j in 0 to (width - 1) {
+        accum := !accum ^ "\t" ^ (string_of_int m.(j).(i));
+      };
+      Js.log !accum;
+    };
+  };
+
+  let rotation_matrix = {
+    let m = Array.make_matrix 2 2 0;
+    m.(0).(0) = 0; m.(1).(0) = -1; m.(0).(1) = 1; m.(1).(1) = 0;
+    m
+  };
+};
+
+module Block = {
+  type t = position;
+
+  let to_matrix t => {
+    let m = Array.make_matrix 1 2 0;
+    let (x, y) = t; m.(0) = x; m.(1) = y;
+    m;
+  };
+
+  let from_matrix m => {
+    let x = m.(0).(0); let y = m.(0).(1); (x, y)
+  };
+
+  let rotate t origin => {
+    let m_t = to_matrix t; let m_origin = to_matrix origin;
+    Matrix.add m_origin (Matrix.multiply Matrix.rotation_matrix (Matrix.substract m_t m_origin))
+  };
+};
+
 module Renderer = {
   let print blocks (width, height) => {
     for i in 0 to (height - 1) {
@@ -164,4 +227,9 @@ let () = {
     Board.print board'.blocks (board'.dimension);
     Js.log "";
   });
+
+  Matrix.print Matrix.rotation_matrix; Js.log "";
+  Matrix.print (Matrix.add Matrix.rotation_matrix Matrix.rotation_matrix); Js.log "";
+  Matrix.print (Matrix.substract Matrix.rotation_matrix Matrix.rotation_matrix); Js.log "";
+  Matrix.print (Matrix.multiply Matrix.rotation_matrix Matrix.rotation_matrix); Js.log "";
 }
