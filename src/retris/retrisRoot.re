@@ -30,70 +30,58 @@ module Tetromino = {
   type tetromino_type =
     | Fixed 
     | Moveable;
+  type shape = 
+    | I | O | L | T | S;
+
   type t = {
     blocks: blocks,
     dimension: dimension,
-    klazz: tetromino_type
+    klazz: tetromino_type,
+    shape: shape,
   };
 
-  let i_shape () => {
-    /* 0000 */
-    /* 0000 */
-    /* 0000 */
-    /* 1111 */
-    let m = Array.make_matrix 4 4 false;
-    m.(0).(3) = true; m.(1).(3) = true; m.(2).(3) = true; m.(3).(3) = true;
-    {
-      blocks: m,
-      dimension: (4, 4),
-      klazz: Moveable
-    };
-  };
-  let o_shape () => {
-    /* 11 */
-    /* 11 */
-    let m = Array.make_matrix 2 2 true;
-    {
-      blocks: m,
-      dimension: (2, 2),
-      klazz: Moveable
-    };
-  };
-  let l_shape () => {
-    /* 100 */
-    /* 100 */
-    /* 110 */
-    let m = Array.make_matrix 3 3 false;
-    m.(0).(0) = true; m.(0).(1) = true; m.(0).(2) = true; m.(1).(2) = true; 
-    {
-      blocks: m,
-      dimension: (3, 3),
-      klazz: Moveable
-    };
-  };
-  let t_shape () => {
-    /* 000 */
-    /* 010 */
-    /* 111 */
-    let m = Array.make_matrix 3 3 false;
-    m.(0).(2) = true; m.(1).(2) = true; m.(2).(2) = true; m.(1).(1) = true; 
-    {
-      blocks: m,
-      dimension: (3, 3),
-      klazz: Moveable
-    };
-  };
-  let s_shape () => {
-    /* 000 */
-    /* 011 */
-    /* 110 */
-    let m = Array.make_matrix 3 3 false;
-    m.(0).(2) = true; m.(1).(2) = true; m.(1).(1) = true; m.(2).(1) = true; 
-    {
-      blocks: m,
-      dimension: (3, 3),
-      klazz: Moveable
-    };
+  let create (shape: shape) => {
+    switch shape {
+      | I => {
+        /* 0000 */
+        /* 0000 */
+        /* 0000 */
+        /* 1111 */
+        let m = Array.make_matrix 4 4 false;
+        m.(0).(3) = true; m.(1).(3) = true; m.(2).(3) = true; m.(3).(3) = true;
+        { blocks: m, dimension: (4, 4), klazz: Moveable, shape };
+      }
+      | O => {
+        /* 11 */
+        /* 11 */
+        let m = Array.make_matrix 2 2 true;
+        { blocks: m, dimension: (2, 2), klazz: Moveable, shape };
+      }
+      | L => {
+        /* 100 */
+        /* 100 */
+        /* 110 */
+        let m = Array.make_matrix 3 3 false;
+        m.(0).(0) = true; m.(0).(1) = true; m.(0).(2) = true; m.(1).(2) = true; 
+        { blocks: m, dimension: (3, 3), klazz: Moveable, shape };
+      }
+      | T => {
+        /* 000 */
+        /* 010 */
+        /* 111 */
+        let m = Array.make_matrix 3 3 false;
+        m.(0).(2) = true; m.(1).(2) = true; m.(2).(2) = true; m.(1).(1) = true; 
+        { blocks: m, dimension: (3, 3), klazz: Moveable, shape };
+      }
+      | S => {
+        /* 000 */
+        /* 011 */
+        /* 110 */
+        let m = Array.make_matrix 3 3 false;
+        m.(0).(2) = true; m.(1).(2) = true; m.(1).(1) = true; m.(2).(1) = true; 
+        { blocks: m, dimension: (3, 3), klazz: Moveable, shape };
+      }
+    }
   };
 };
 
@@ -156,11 +144,11 @@ let () = {
   let board = Board.create dimension;
   Board.print board.blocks dimension;
   Js.log "";
-  let tetrominos = [Tetromino.i_shape (),
-    Tetromino.o_shape (),
-    Tetromino.l_shape (),
-    Tetromino.t_shape (),
-    Tetromino.s_shape ()];
+  let tetrominos = [(Tetromino.create I),
+    (Tetromino.create O),
+    (Tetromino.create L),
+    (Tetromino.create T),
+    (Tetromino.create S)];
 
   tetrominos |> List.iter (fun (tetromino: Tetromino.t) => {
     switch (tetromino.klazz) {
