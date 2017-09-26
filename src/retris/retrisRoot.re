@@ -172,6 +172,8 @@ module Tetromino = {
         |> Block.scale factor::(1.0/.scale_factor)
     };
   };
+
+  let freeze t => { ...t, klazz: Fixed};
 };
 
 module Board = {
@@ -183,6 +185,7 @@ module Board = {
     tetrominos_on_board: list tetromino_on_board,
     dimension: dimension
   };
+  type movement = | Moved t | Collide | NoActiveTetromino;
 
   let create dimension => { tetrominos_on_board: [], dimension };
 
@@ -225,7 +228,7 @@ module Board = {
     Matrix.print (matrix t);
   };
 
-  let does_intersect t tetrominos_on_board new_tetromino_on_board => {
+  let does_collide t tetrominos_on_board new_tetromino_on_board => {
     let extract_blocks idb => {
       let (_, (x, y)) = idb;
       (x, y)
@@ -245,8 +248,11 @@ module Board = {
     Js.log "blocks2";
     blocks2 |> (List.iter Block.print);
 
-    blocks1 |> List.exists(fun b => 
+    let intersect = blocks1 |> List.exists(fun b => 
       blocks2 |> List.exists(fun c => Block.equal b c));
+
+    let out_of_bound = blocks1 |> List.exists(fun b => b |> (in_bound t) |> (not));
+    intersect || out_of_bound;
   };
 
   let put t tetromino top_left_position => {
@@ -258,17 +264,16 @@ module Board = {
         | Fixed => true
       };
     });
-    if (does_intersect t remainders new_tetromino_on_board) {
-      Js.log "Intersect!";
-      None;
+    if (does_collide t remainders new_tetromino_on_board) {
+      Js.log "Collide!";
+      Collide;
     } else {
-      Js.log "Doesn't Intersect!";
       let b = {
         ...t,
         tetrominos_on_board: [new_tetromino_on_board, ...remainders]
       };
 
-      Some b;
+      Moved b;
     }
   };
 
@@ -289,6 +294,16 @@ module Board = {
       });
   };
 
+  let stop_active_tetromino (t:t):t => {
+    ...t,
+    tetrominos_on_board: t.tetrominos_on_board |> List.map (fun tetromino_on_board => 
+      { 
+        ...tetromino_on_board,
+        tetromino: (Tetromino.freeze tetromino_on_board.tetromino)
+      }
+    )
+  };
+
   let move_tetromino t direction => {
     let active = active_tetromino t;
     switch (active) {
@@ -302,7 +317,7 @@ module Board = {
         let (x', y') = (x + dx, y + dy);
         put t a.tetromino (x', y');
       }
-      | None => None;
+      | None => NoActiveTetromino;
     }
   };
 };
@@ -319,26 +334,28 @@ module Game = {
     };
   };
 
-  let tick (t: t) :t => {
-    switch (Board.active_tetromino t.board) {
+  let rec tick (t: t) :t => {
+    let m = switch (Board.active_tetromino t.board) {
       | None => {
         let all_shapes = [|Tetromino.I, O, L, T, S|];
         let random_shape = all_shapes.(Random.int (Array.length all_shapes));
         let (width, _) = t.board.dimension;
-        let p = Board.put t.board (Tetromino.create random_shape) (width / 2, 0);
-        switch (p) {
-          | Some board => { board: board }
-          | None  => t
-        }
+        Board.put t.board (Tetromino.create random_shape) (width / 2, 0);
       }
       | Some _ => {
-        let p = Board.move_tetromino t.board Down;
-        switch (p) {
-          | Some board => { board: board }
-          | None  => t
-        }
+        Board.move_tetromino t.board Down;
       }
     };
+    switch (m) {
+      | Moved board => { board: board }
+      | NoActiveTetromino  => t
+      | Collide => {
+        let new_t = {
+          board: (Board.stop_active_tetromino t.board)
+        };
+        tick new_t
+      }
+    }
   };
 };
 
