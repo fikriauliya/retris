@@ -9,6 +9,12 @@ type position = (x, y);
 type blocks = array (array bool);
 type direction = | Down | Right | Left;
 
+module Result = {
+  type t 'a 'b = 
+    | Ok 'a
+    | Error 'b
+};
+
 module Matrix = {
   let multiply x y => {
     /* https://rosettacode.org/wiki/Matrix_multiplication#OCaml */
@@ -76,6 +82,8 @@ module Block = {
   };
 
   let print (x, y) => Js.log ("(" ^ (string_of_int x) ^ ", " ^ (string_of_int y) ^ ")");
+
+  let equal (x1, y1) (x2, y2) => (x1 == x2) && (y1 == y2);
 };
 
 module Tetromino = {
@@ -187,22 +195,58 @@ module Board = {
     }
   };
 
-  let print t => {
+  let get_id_and_blocks t => {
+    t.tetrominos_on_board
+    |> List.map (fun tob => {
+      let tetromino = tob.tetromino;
+      let (dis_x, dis_y) = tob.top_left_position;
+      tetromino.blocks 
+      |> List.map (fun block => {
+        let (x, y) = block;
+        (tetromino.id, (x + dis_x, y + dis_y));
+      })
+    })
+    |> List.concat
+  };
+
+  let matrix t => {
     let (width, height) = t.dimension;
     let m = Array.make_matrix width height 0;
-    t.tetrominos_on_board
-      |> List.iter (fun tob => {
-        let tetromino = tob.tetromino;
-        let (dis_x, dis_y) = tob.top_left_position;
-        tetromino.blocks |> List.iter (fun block => {
-          let (x, y) = block;
-          let (x', y') = (x + dis_x, y + dis_y);
-          if (in_bound t (x', y')) {
-            m.(x').(y') = tetromino.id;
-          }
-        })
+    t |> get_id_and_blocks |> List.iter (fun idb => {
+      let (id, (x, y)) = idb;
+      if (in_bound t (x, y)) {
+        m.(x).(y) = id;
+      }
     });
-    Matrix.print m;
+    m
+  };
+
+  let print t => {
+    Matrix.print (matrix t);
+  };
+
+  let does_intersect t tetrominos_on_board new_tetromino_on_board => {
+    let extract_blocks idb => {
+      let (_, (x, y)) = idb;
+      (x, y)
+    };
+
+    let blocks1 = get_id_and_blocks {
+      ...t,
+      tetrominos_on_board: [new_tetromino_on_board]
+    } |> List.map(extract_blocks);
+    Js.log "blocks1";
+    blocks1 |> (List.iter Block.print);
+
+    let blocks2 = get_id_and_blocks {
+      ...t,
+      tetrominos_on_board: tetrominos_on_board
+    } |> List.map(extract_blocks);
+    Js.log "blocks2";
+    blocks2 |> (List.iter Block.print);
+
+    blocks1 |> List.exists(fun b => 
+      blocks2 |> List.exists(fun c => Block.equal b c));
   };
 
   let put t tetromino top_left_position => {
@@ -214,10 +258,18 @@ module Board = {
         | Fixed => true
       };
     });
-    {
-      ...t,
-      tetrominos_on_board: [new_tetromino_on_board, ...remainders]
-    };
+    if (does_intersect t remainders new_tetromino_on_board) {
+      Js.log "Intersect!";
+      None;
+    } else {
+      Js.log "Doesn't Intersect!";
+      let b = {
+        ...t,
+        tetrominos_on_board: [new_tetromino_on_board, ...remainders]
+      };
+
+      Some b;
+    }
   };
 
   exception DuplicateActiveteTetromino;
@@ -247,7 +299,7 @@ module Board = {
               let (x', y') = (x, y + 1);
               put t a.tetromino (x', y');
             }
-            | None => t
+            | None => None
           }
         }
     }
@@ -266,19 +318,23 @@ module Game = {
     };
   };
 
-  let tick t => {
+  let tick (t: t) :t => {
     switch (Board.active_tetromino t.board) {
       | None => {
         let all_shapes = [|Tetromino.I, O, L, T, S|];
         let random_shape = all_shapes.(Random.int (Array.length all_shapes));
         let (width, _) = t.board.dimension;
-        {
-          board: Board.put t.board (Tetromino.create random_shape) (width / 2, 0)
+        let p = Board.put t.board (Tetromino.create random_shape) (width / 2, 0);
+        switch (p) {
+          | Some board => { board: board }
+          | None  => t
         }
       }
       | Some _ => {
-        { 
-          board: Board.move_tetromino t.board Down
+        let p = Board.move_tetromino t.board Down;
+        switch (p) {
+          | Some board => { board: board }
+          | None  => t
         }
       }
     };
