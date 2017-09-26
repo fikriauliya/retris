@@ -11,18 +11,14 @@ type blocks = array (array bool);
 module Matrix = {
   let multiply x y => {
     /* https://rosettacode.org/wiki/Matrix_multiplication#OCaml */
-    let x0 = Array.length x;
-    let y0 = Array.length y;
-    let y1 = if (y0 == 0) {
-      0;
-    } else {
-      Array.length y.(0);
-    };
-    let z = Array.make_matrix x0 y1 0;
-    for i in 0 to (x0-1) {
-      for j in 0 to (y1-1) {
-        for k in 0 to (y0-1) {
-          z.(i).(j) = z.(i).(j) + x.(i).(k) * y.(k).(j);
+    let x_width = Array.length x;
+    let x_height = Array.length x.(0);
+    let y_width = Array.length y;
+    let z = Array.make_matrix y_width x_height 0;
+    for i in 0 to (x_height-1) {
+      for j in 0 to (y_width-1) {
+        for k in 0 to (x_width-1) {
+          z.(j).(i) = z.(j).(i) + x.(k).(i) * y.(j).(k);
         }
       }
     };
