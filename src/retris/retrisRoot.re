@@ -290,18 +290,19 @@ module Board = {
   };
 
   let move_tetromino t direction => {
-    switch (direction) {
-      | Down | Right | Left =>  {
-          let active = active_tetromino t;
-          switch (active) {
-            | Some a =>  {
-              let (x, y) = a.top_left_position;
-              let (x', y') = (x, y + 1);
-              put t a.tetromino (x', y');
-            }
-            | None => None
-          }
-        }
+    let active = active_tetromino t;
+    switch (active) {
+      | Some a =>  {
+        let (x, y) = a.top_left_position;
+        let (dx, dy) = switch (direction) {
+          | Down => (0, 1)
+          | Right => (1, 0)
+          | Left => (-1, 0)
+          };
+        let (x', y') = (x + dx, y + dy);
+        put t a.tetromino (x', y');
+      }
+      | None => None;
     }
   };
 };
