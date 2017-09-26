@@ -64,8 +64,17 @@ module Block = {
 
   let rotate t origin => {
     let m_t = to_matrix t; let m_origin = to_matrix origin;
-    Matrix.add m_origin (Matrix.multiply Matrix.rotation_matrix (Matrix.substract m_t m_origin))
+    let m' = Matrix.add m_origin (Matrix.multiply Matrix.rotation_matrix (Matrix.substract m_t m_origin));
+    from_matrix m'
   };
+
+  let scale t ::factor => {
+    t |> List.map(fun | (x, y) => 
+      (int_of_float (factor *. float(x)), int_of_float (factor *. float(y)))
+    );
+  };
+
+  let print (x, y) => Js.log ("(" ^ (string_of_int x) ^ ", " ^ (string_of_int y) ^ ")");
 };
 
 module Renderer = {
@@ -150,6 +159,25 @@ module Tetromino = {
       }
     }
   };
+
+  let rotate t => {
+    let scale_factor = switch (t.shape) {
+      | I | O  => 2.0
+      | L | T | S => 1.0
+      };
+    let origin = switch (t.shape) {
+      | I => (3, 3)
+      | O => (1, 1)
+      | L | T | S => (1, 1)
+      };
+    {
+      ...t,
+      blocks: t.blocks
+        |> Block.scale factor::scale_factor 
+        |> fun blocks => blocks |> List.map (fun b => Block.rotate b origin)
+        |> Block.scale factor::(1.0/.scale_factor)
+    };
+  };
 };
 
 module Board = {
@@ -207,7 +235,7 @@ let dimension = (10, 15);
 let () = {
   let board = Board.create dimension;
   Board.print board.blocks;
-  Js.log "";
+  let (x, y) = Block.from_matrix (Block.to_matrix (2,3)); Js.log (string_of_int x); Js.log (string_of_int y);
   let tetrominos = [(Tetromino.create I),
     (Tetromino.create O),
     (Tetromino.create L),
@@ -218,22 +246,18 @@ let () = {
     switch (tetromino.klazz) {
       | Fixed | Moveable => {
         Tetromino.print tetromino;
+        Tetromino.print (tetromino |> Tetromino.rotate);
+        Tetromino.print (tetromino |> Tetromino.rotate |> Tetromino.rotate);
+        Tetromino.print (tetromino |> Tetromino.rotate |> Tetromino.rotate |> Tetromino.rotate);
+        Tetromino.print (tetromino |> Tetromino.rotate |> Tetromino.rotate |> Tetromino.rotate |> Tetromino.rotate);
         Js.log "";
       };
     };
   });
-
+  /*  */
   /* tetrominos |> List.iter (fun t => { */
   /*   let board' = Board.put board t (0, -3); */
   /*   Board.print board'.blocks; */
   /*   Js.log ""; */
   /* }); */
-
-  Matrix.print Matrix.rotation_matrix; Js.log "";
-  Matrix.print (Matrix.add Matrix.rotation_matrix Matrix.rotation_matrix); Js.log "";
-  Matrix.print (Matrix.substract Matrix.rotation_matrix Matrix.rotation_matrix); Js.log "";
-  Matrix.print (Matrix.multiply Matrix.rotation_matrix Matrix.rotation_matrix); Js.log "";
-
-  Matrix.print (Block.to_matrix (2,3)); Js.log "";
-  let (x, y) = Block.from_matrix (Block.to_matrix (2,3)); Js.log (string_of_int x); Js.log (string_of_int y);
 }
