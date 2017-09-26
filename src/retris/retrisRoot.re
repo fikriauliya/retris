@@ -92,7 +92,6 @@ module Renderer = {
 };
 
 module Tetromino = {
-  include Renderer;
   type tetromino_type =
     | Fixed 
     | Moveable;
@@ -100,9 +99,25 @@ module Tetromino = {
     | I | O | L | T | S;
 
   type t = {
-    blocks: blocks,
+    blocks: list Block.t,
     klazz: tetromino_type,
     shape: shape,
+  };
+
+  let print t => {
+    let size = t.blocks |> List.fold_left 
+      (fun accum p => {
+        let (x, y) = p;
+        (max (max x accum) y)
+      })
+      0 |> (fun s => s + 1);
+
+    let m = Array.make_matrix size size 0;
+    t.blocks |> List.iter (fun p => {
+      let (x, y) = p;
+      m.(x).(y) = 1;
+    });
+    Matrix.print m;
   };
 
   let create (shape: shape) => {
@@ -112,39 +127,30 @@ module Tetromino = {
         /* 0000 */
         /* 0000 */
         /* 1111 */
-        let m = Array.make_matrix 4 4 false;
-        m.(0).(3) = true; m.(1).(3) = true; m.(2).(3) = true; m.(3).(3) = true;
-        { blocks: m, klazz: Moveable, shape };
+        { blocks: [(0, 3), (1, 3), (2, 3), (3, 3)], klazz: Moveable, shape };
       }
       | O => {
         /* 11 */
         /* 11 */
-        let m = Array.make_matrix 2 2 true;
-        { blocks: m, klazz: Moveable, shape };
+        { blocks: [(0, 0), (0, 1), (1, 0), (1, 1)], klazz: Moveable, shape };
       }
       | L => {
         /* 100 */
         /* 100 */
         /* 110 */
-        let m = Array.make_matrix 3 3 false;
-        m.(0).(0) = true; m.(0).(1) = true; m.(0).(2) = true; m.(1).(2) = true; 
-        { blocks: m, klazz: Moveable, shape };
+        { blocks: [(0, 0), (0, 1), (0, 2), (1, 2)], klazz: Moveable, shape };
       }
       | T => {
         /* 000 */
         /* 010 */
         /* 111 */
-        let m = Array.make_matrix 3 3 false;
-        m.(0).(2) = true; m.(1).(2) = true; m.(2).(2) = true; m.(1).(1) = true; 
-        { blocks: m, klazz: Moveable, shape };
+        { blocks: [(0, 2), (1, 2), (2, 2), (1, 1)], klazz: Moveable, shape };
       }
       | S => {
         /* 000 */
         /* 011 */
         /* 110 */
-        let m = Array.make_matrix 3 3 false;
-        m.(0).(2) = true; m.(1).(2) = true; m.(1).(1) = true; m.(2).(1) = true; 
-        { blocks: m, klazz: Moveable, shape };
+        { blocks: [(0, 2), (1, 2), (1, 1), (2, 1)], klazz: Moveable, shape };
       }
     }
   };
@@ -175,29 +181,29 @@ module Board = {
       true;
     }
   };
-
-  let put t (tetromino: Tetromino.t) ((x, y):position) => {
-    switch (tetromino.klazz) {
-      | Fixed | Moveable => {
-          let blocks' = t.blocks |> (Array.map Array.copy);
-          tetromino.blocks |> Array.iteri (fun ix m => {
-            m |> Array.iteri (fun iy tet => {
-              let x' = ix + x;
-              let y' = iy + y;
-              if (in_bound t (x', y')) {
-                blocks'.(x').(y') = blocks'.(x').(y') || tet;
-              } else {
-                ();
-              }
-            }
-          )});
-          {
-            blocks: blocks',
-            tetrominos: [tetromino, ...t.tetrominos]
-          };
-      }          
-    };
-  };
+  /*  */
+  /* let put t (tetromino: Tetromino.t) ((x, y):position) => { */
+  /*   switch (tetromino.klazz) { */
+  /*     | Fixed | Moveable => { */
+  /*         let blocks' = t.blocks |> (Array.map Array.copy); */
+  /*         tetromino.blocks |> Array.iteri (fun ix m => { */
+  /*           m |> Array.iteri (fun iy tet => { */
+  /*             let x' = ix + x; */
+  /*             let y' = iy + y; */
+  /*             if (in_bound t (x', y')) { */
+  /*               blocks'.(x').(y') = blocks'.(x').(y') || tet; */
+  /*             } else { */
+  /*               (); */
+  /*             } */
+  /*           } */
+  /*         )}); */
+  /*         { */
+  /*           blocks: blocks', */
+  /*           tetrominos: [tetromino, ...t.tetrominos] */
+  /*         }; */
+  /*     }           */
+  /*   }; */
+  /* }; */
 };
 
 let dimension = (10, 15);
@@ -215,17 +221,17 @@ let () = {
   tetrominos |> List.iter (fun (tetromino: Tetromino.t) => {
     switch (tetromino.klazz) {
       | Fixed | Moveable => {
-        Tetromino.print tetromino.blocks;
+        Tetromino.print tetromino;
         Js.log "";
       };
     };
   });
 
-  tetrominos |> List.iter (fun t => {
-    let board' = Board.put board t (0, -3);
-    Board.print board'.blocks;
-    Js.log "";
-  });
+  /* tetrominos |> List.iter (fun t => { */
+  /*   let board' = Board.put board t (0, -3); */
+  /*   Board.print board'.blocks; */
+  /*   Js.log ""; */
+  /* }); */
 
   Matrix.print Matrix.rotation_matrix; Js.log "";
   Matrix.print (Matrix.add Matrix.rotation_matrix Matrix.rotation_matrix); Js.log "";
