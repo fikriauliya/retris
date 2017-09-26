@@ -77,25 +77,6 @@ module Block = {
   let print (x, y) => Js.log ("(" ^ (string_of_int x) ^ ", " ^ (string_of_int y) ^ ")");
 };
 
-module Renderer = {
-  let print blocks => {
-    let width = Array.length blocks; let height = Array.length blocks.(0);
-    Js.log ((string_of_int height) ^ " x " ^ (string_of_int width));
-    for i in 0 to (height - 1) {
-      let accum = ref "";
-      for j in 0 to (width - 1) {
-        let bit = if blocks.(j).(i) {
-          "1"
-        } else {
-          "0"
-        };
-        accum := !accum ^ bit;
-      };
-      Js.log !accum;
-    };
-  };
-};
-
 module Tetromino = {
   type tetromino_type =
     | Fixed 
@@ -104,6 +85,7 @@ module Tetromino = {
     | I | O | L | T | S;
 
   type t = {
+    id: int,
     blocks: list Block.t,
     klazz: tetromino_type,
     shape: shape,
@@ -125,39 +107,42 @@ module Tetromino = {
     Matrix.print m;
   };
 
+  let id = ref (0);
+
   let create (shape: shape) => {
+    id := !id + 1;
     switch shape {
       | I => {
         /* 0000 */
         /* 0000 */
         /* 0000 */
         /* 1111 */
-        { blocks: [(0, 3), (1, 3), (2, 3), (3, 3)], klazz: Moveable, shape };
+        { id: !id, blocks: [(0, 3), (1, 3), (2, 3), (3, 3)], klazz: Moveable, shape };
       }
       | O => {
         /* 11 */
         /* 11 */
-        { blocks: [(0, 0), (0, 1), (1, 0), (1, 1)], klazz: Moveable, shape };
+        { id: !id, blocks: [(0, 0), (0, 1), (1, 0), (1, 1)], klazz: Moveable, shape };
       }
       | L => {
         /* 100 */
         /* 100 */
         /* 110 */
-        { blocks: [(0, 0), (0, 1), (0, 2), (1, 2)], klazz: Moveable, shape };
+        { id: !id, blocks: [(0, 0), (0, 1), (0, 2), (1, 2)], klazz: Moveable, shape };
       }
       | T => {
         /* 000 */
         /* 010 */
         /* 111 */
-        { blocks: [(0, 2), (1, 2), (2, 2), (1, 1)], klazz: Moveable, shape };
+        { id: !id, blocks: [(0, 2), (1, 2), (2, 2), (1, 1)], klazz: Moveable, shape };
       }
       | S => {
         /* 000 */
         /* 011 */
         /* 110 */
-        { blocks: [(0, 2), (1, 2), (1, 1), (2, 1)], klazz: Moveable, shape };
+        { id: !id, blocks: [(0, 2), (1, 2), (1, 1), (2, 1)], klazz: Moveable, shape };
       }
-    }
+    };
   };
 
   let rotate t => {
@@ -181,61 +166,61 @@ module Tetromino = {
 };
 
 module Board = {
-  include Renderer;
+  type tetromino_on_board = {
+    tetromino: Tetromino.t,
+    top_left_position: position
+  };
   type t = {
-    blocks: blocks,
-    tetrominos: list Tetromino.t
+    tetrominos_on_board: list tetromino_on_board,
+    dimension: dimension
   };
-
-  let create dimension => {
-    let (width, height) = dimension;
-    {
-      blocks: Array.make_matrix width height false,
-      tetrominos: [],
-    }
-  };
+  let create dimension => { tetrominos_on_board: [], dimension };
 
   let in_bound t ((x, y):position) => {
-    let (width, height) = (Array.length t.blocks, Array.length t.blocks.(0));
-    if (x < 0 || y < 0) {
-      false;
-    } else if (x >= width || y >= height) {
+    let (width, height) = t.dimension;
+    if (x < 0 || y < 0 || x >= width || y >= height) {
       false;
     } else {
       true;
     }
   };
-  /*  */
-  /* let put t (tetromino: Tetromino.t) ((x, y):position) => { */
-  /*   switch (tetromino.klazz) { */
-  /*     | Fixed | Moveable => { */
-  /*         let blocks' = t.blocks |> (Array.map Array.copy); */
-  /*         tetromino.blocks |> Array.iteri (fun ix m => { */
-  /*           m |> Array.iteri (fun iy tet => { */
-  /*             let x' = ix + x; */
-  /*             let y' = iy + y; */
-  /*             if (in_bound t (x', y')) { */
-  /*               blocks'.(x').(y') = blocks'.(x').(y') || tet; */
-  /*             } else { */
-  /*               (); */
-  /*             } */
-  /*           } */
-  /*         )}); */
-  /*         { */
-  /*           blocks: blocks', */
-  /*           tetrominos: [tetromino, ...t.tetrominos] */
-  /*         }; */
-  /*     }           */
-  /*   }; */
-  /* }; */
+
+  let print t => {
+    let (width, height) = t.dimension;
+    let m = Array.make_matrix width height 0;
+    t.tetrominos_on_board
+      |> List.iter (fun tob => {
+        let tetromino = tob.tetromino;
+        let (dis_x, dis_y) = tob.top_left_position;
+        tetromino.blocks |> List.iter (fun block => {
+          let (x, y) = block;
+          let (x', y') = (x + dis_x, y + dis_y);
+          if (in_bound t (x', y')) {
+            m.(x').(y') = tetromino.id;
+          }
+        })
+    });
+    Matrix.print m;
+  };
+
+  let put t tetromino top_left_position => {
+    /* let (displacement_x, displacement_y) = diplacement; */
+    let new_tetromino_on_board = { tetromino, top_left_position };
+    let remainders = t.tetrominos_on_board;
+    {
+      ...t,
+      tetrominos_on_board: [new_tetromino_on_board, ...remainders]
+    };
+  };
 };
 
 let dimension = (10, 15);
 
 let () = {
   let board = Board.create dimension;
-  Board.print board.blocks;
+  Board.print board;
   let (x, y) = Block.from_matrix (Block.to_matrix (2,3)); Js.log (string_of_int x); Js.log (string_of_int y);
+
   let tetrominos = [(Tetromino.create I),
     (Tetromino.create O),
     (Tetromino.create L),
@@ -254,10 +239,9 @@ let () = {
       };
     };
   });
-  /*  */
-  /* tetrominos |> List.iter (fun t => { */
-  /*   let board' = Board.put board t (0, -3); */
-  /*   Board.print board'.blocks; */
-  /*   Js.log ""; */
-  /* }); */
+  tetrominos |> List.iter (fun t => {
+    let board' = Board.put board t (0, 0);
+    Board.print board';
+    Js.log "";
+  });
 }
