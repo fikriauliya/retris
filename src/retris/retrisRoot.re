@@ -7,6 +7,7 @@ type y = int;
 type position = (x, y);
 
 type blocks = array (array bool);
+type direction = | Down | Right | Left;
 
 module Matrix = {
   let multiply x y => {
@@ -174,6 +175,7 @@ module Board = {
     tetrominos_on_board: list tetromino_on_board,
     dimension: dimension
   };
+
   let create dimension => { tetrominos_on_board: [], dimension };
 
   let in_bound t ((x, y):position) => {
@@ -206,42 +208,89 @@ module Board = {
   let put t tetromino top_left_position => {
     /* let (displacement_x, displacement_y) = diplacement; */
     let new_tetromino_on_board = { tetromino, top_left_position };
-    let remainders = t.tetrominos_on_board;
+    let remainders = t.tetrominos_on_board |> List.filter (fun t => {
+      switch (t.tetromino.klazz) {
+        | Moveable => false
+        | Fixed => true
+      };
+    });
     {
       ...t,
       tetrominos_on_board: [new_tetromino_on_board, ...remainders]
     };
   };
+
+  exception DuplicateActiveteTetromino;
+
+  let active_tetromino t => {
+    t.tetrominos_on_board 
+      |> List.filter (fun tetromino_on_board => {
+        switch (tetromino_on_board.tetromino.klazz) {
+          | Moveable => true
+          | Fixed => false
+          }
+      })
+      |> (fun ls => switch (ls) {
+        | [] => None
+        | [h] => Some h
+        | [_, ..._] => raise DuplicateActiveteTetromino
+      });
+  };
+
+  let move_tetromino t direction => {
+    switch (direction) {
+      | Down | Right | Left =>  {
+          let active = active_tetromino t;
+          switch (active) {
+            | Some a =>  {
+              let (x, y) = a.top_left_position;
+              let (x', y') = (x, y + 1);
+              put t a.tetromino (x', y');
+            }
+            | None => t
+          }
+        }
+    }
+  };
 };
 
-let dimension = (10, 15);
+module Game = {
+  type t = {
+    board: Board.t,
+  };
+
+  let create dimension => {
+    Random.init 0;
+    {
+      board: (Board.create dimension)
+    };
+  };
+
+  let tick t => {
+    switch (Board.active_tetromino t.board) {
+      | None => {
+        let all_shapes = [|Tetromino.I, O, L, T, S|];
+        let random_shape = all_shapes.(Random.int (Array.length all_shapes));
+        let (width, _) = t.board.dimension;
+        {
+          board: Board.put t.board (Tetromino.create random_shape) (width / 2, 0)
+        }
+      }
+      | Some _ => {
+        { 
+          board: Board.move_tetromino t.board Down
+        }
+      }
+    };
+  };
+};
+
+let dimension = (10, 10);
 
 let () = {
-  let board = Board.create dimension;
-  Board.print board;
-  let (x, y) = Block.from_matrix (Block.to_matrix (2,3)); Js.log (string_of_int x); Js.log (string_of_int y);
-
-  let tetrominos = [(Tetromino.create I),
-    (Tetromino.create O),
-    (Tetromino.create L),
-    (Tetromino.create T),
-    (Tetromino.create S)];
-
-  tetrominos |> List.iter (fun (tetromino: Tetromino.t) => {
-    switch (tetromino.klazz) {
-      | Fixed | Moveable => {
-        Tetromino.print tetromino;
-        Tetromino.print (tetromino |> Tetromino.rotate);
-        Tetromino.print (tetromino |> Tetromino.rotate |> Tetromino.rotate);
-        Tetromino.print (tetromino |> Tetromino.rotate |> Tetromino.rotate |> Tetromino.rotate);
-        Tetromino.print (tetromino |> Tetromino.rotate |> Tetromino.rotate |> Tetromino.rotate |> Tetromino.rotate);
-        Js.log "";
-      };
-    };
-  });
-  tetrominos |> List.iter (fun t => {
-    let board' = Board.put board t (0, 0);
-    Board.print board';
-    Js.log "";
-  });
+  let game = ref (Game.create dimension);
+  for _ in 0 to 10 {
+    game := Game.tick !game;
+    Board.print (!game).board;
+  }
 }
