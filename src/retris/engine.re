@@ -9,6 +9,7 @@ type position = (x, y);
 type direction = | Down | Right | Left;
 
 module Matrix = {
+  type t = array (array int);
   let multiply x y => {
     let x_width = Array.length x;
     let x_height = Array.length x.(0);
@@ -46,6 +47,15 @@ module Matrix = {
     m.(0).(0) = 0; m.(1).(0) = -1; m.(0).(1) = 1; m.(1).(1) = 0;
     m
   };
+
+  let transpose m => {
+    let (width, height) = ((Array.length m), Array.length m.(0));
+    let m' = Array.make_matrix height width 0;
+    m |> Array.iteri (fun i col =>
+      col |> Array.iteri (fun j _ => m'.(j).(i) = m.(i).(j))
+    );
+    m';
+  }
 };
 
 module Block = {
@@ -182,6 +192,7 @@ module Board = {
   };
   type movement = | Moved t | Collide | Still | NoActiveTetromino | Full;
   type collision = | Intersection (list position) | HitBottom | HitLeftRight | NoCollision;
+  type id_and_block = (int, Block.t);
 
   let create dimension => { tetrominos_on_board: [], dimension };
 
@@ -192,7 +203,7 @@ module Board = {
 
   let in_board t ((x, y):position) => (y >= 0 && (in_moveable_space t (x, y)));
 
-  let get_id_and_blocks t => {
+  let get_id_and_blocks t: list id_and_block => {
     t.tetrominos_on_board
     |> List.map (fun tob => {
       let tetromino = tob.tetromino;
@@ -400,6 +411,8 @@ module Game = {
 
   let rotate t => t;
   let move t direction => t;
+
+  let matrix t => Board.matrix t.board
 };
 
 let dimension = (10, 10);
@@ -416,17 +429,17 @@ let tick () => {
     | Some g => game := Some (Game.tick g)
   };
 };
-
-for i in 0 to 35 {
-  Js.log ("Move #" ^ (string_of_int i));
-  switch (!game) {
-    | None => game := Some (Game.create dimension)
-    | Some g => {
-      game := Some (Game.tick g);
-      switch (!game) {
-        | Some g => Board.print g.board;
-        | None => ()
-        }
-    }
-  };
-};
+/*  */
+/* for i in 0 to 35 { */
+/*   Js.log ("Move #" ^ (string_of_int i)); */
+/*   switch (!game) { */
+/*     | None => game := Some (Game.create dimension) */
+/*     | Some g => { */
+/*       game := Some (Game.tick g); */
+/*       switch (!game) { */
+/*         | Some g => Board.print g.board; */
+/*         | None => () */
+/*         } */
+/*     } */
+/*   }; */
+/* }; */
