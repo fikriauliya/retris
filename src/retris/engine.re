@@ -93,7 +93,7 @@ module Tetromino = {
     | Fixed 
     | Moveable;
   type shape = 
-    | I | O | L | T | S;
+    | I | O | L | T | S | J | Z;
 
   type t = {
     id: int,
@@ -156,18 +156,30 @@ module Tetromino = {
         /* 110 */
         { id: !id, blocks: [(0, 2), (1, 2), (1, 1), (2, 1)], klazz: Moveable, shape };
       }
+      | J => {
+        /* 010 */
+        /* 010 */
+        /* 110 */
+        { id: !id, blocks: [(1, 0), (1, 1), (0, 2), (1, 2)], klazz: Moveable, shape };
+      }
+      | Z => {
+        /* 000 */
+        /* 110 */
+        /* 011 */
+        { id: !id, blocks: [(2, 2), (1, 2), (1, 1), (0, 1)], klazz: Moveable, shape };
+      }
     };
   };
 
   let rotate t => {
     let scale_factor = switch (t.shape) {
       | I | O  => 2.0
-      | L | T | S => 1.0
+      | J | L | T | S | Z => 1.0
       };
     let origin = switch (t.shape) {
       | I => (3, 3)
       | O => (1, 1)
-      | L | T | S => (1, 1)
+      | J | L | T | S | Z => (1, 1)
       };
     {
       ...t,

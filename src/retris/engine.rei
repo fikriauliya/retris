@@ -21,7 +21,7 @@ module Tetromino: {
     | Fixed 
     | Moveable;
   type shape = 
-    | I | O | L | T | S;
+    | I | O | L | T | S | J | Z;
 
   type t = {
     id: int,
