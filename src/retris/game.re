@@ -2,7 +2,7 @@ type state = {
   game: option Engine.Game.t,
   timer_id: ref (option Js.Global.intervalId)
 };
-type action = | Tick | ClickLeft | ClickRight;
+type action = | Tick | ClickLeft | ClickRight | ClickRotate | Restart;
 
 let component = ReasonReact.reducerComponent "Game";
 
@@ -20,6 +20,8 @@ let make  _children => {
         | Tick => Engine.Game.tick g
         | ClickLeft => Engine.Game.move g Left
         | ClickRight => Engine.Game.move g Right
+        | ClickRotate => Engine.Game.rotate g
+        | Restart => Engine.Game.create (10, 10)
         }
       }
     };
@@ -36,7 +38,9 @@ let make  _children => {
         <div>
           <Board board=g.board/>
           <button onClick=(self.reduce (fun _event => ClickLeft))> (ReasonReact.stringToElement "<") </button>
+          <button onClick=(self.reduce (fun _event => ClickRotate))> (ReasonReact.stringToElement "o") </button>
           <button onClick=(self.reduce (fun _event => ClickRight))> (ReasonReact.stringToElement ">") </button>
+          <button onClick=(self.reduce (fun _event => Restart))> (ReasonReact.stringToElement "#?!?") </button>
         </div>
       }
     }

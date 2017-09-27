@@ -44,7 +44,7 @@ module Matrix = {
 
   let rotation_matrix = {
     let m = Array.make_matrix 2 2 0;
-    m.(0).(0) = 0; m.(1).(0) = -1; m.(0).(1) = 1; m.(1).(1) = 0;
+    m.(0).(0) = 0; m.(1).(0) = 1; m.(0).(1) = -1; m.(1).(1) = 0;
     m
   };
 
@@ -349,6 +349,17 @@ module Board = {
       | None => NoActiveTetromino;
     }
   };
+
+  let rotate_tetromino t => {
+    let active = active_tetromino t;
+    switch (active) {
+      | Some a =>  {
+        let (x, y) = a.top_left_position;
+        put t (Tetromino.rotate a.tetromino) (x, y);
+        }
+      | None => NoActiveTetromino;
+      }
+  };
 };
 
 module Game = {
@@ -404,11 +415,8 @@ module Game = {
     update t m Down;
   };
 
-  let rotate t => t;
-  let move t direction => {
-    update t (Board.move_tetromino t.board direction) direction;
-  };
-
+  let rotate t => update t (Board.rotate_tetromino t.board) Down;
+  let move t direction => update t (Board.move_tetromino t.board direction) direction;
   let matrix t => Board.matrix t.board
 };
 
