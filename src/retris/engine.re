@@ -243,15 +243,11 @@ module Board = {
       ...t,
       tetrominos_on_board: [new_tetromino_on_board]
     } |> List.map(extract_blocks);
-    /* Js.log "blocks1"; */
-    /* blocks1 |> (List.iter Block.print); */
 
     let blocks2 = get_id_and_blocks {
       ...t,
       tetrominos_on_board: tetrominos_on_board
     } |> List.map(extract_blocks);
-    /* Js.log "blocks2"; */
-    /* blocks2 |> (List.iter Block.print); */
 
     let intersections = blocks1 |> List.filter(fun b => 
       blocks2 |> List.exists(fun c => Block.equal b c));
@@ -264,8 +260,6 @@ module Board = {
       Intersection intersections;
     } else if ((List.length out_of_moveable_space) > 0) {
       let (_, height) = t.dimension;
-      /* Js.log "out_of_moveable_space"; */
-      /* out_of_moveable_space |> (List.iter Block.print); */
       let does_hit_bottom = out_of_moveable_space 
         |> List.exists (fun (_, y) => y == height);
       if (does_hit_bottom) {
@@ -357,12 +351,6 @@ module Board = {
   };
 };
 
-/* module type GameType = { */
-/*   type t; */
-/*   let create: dimension => t; */
-/*   let tick: t => t; */
-/* }; */
-
 module Game = {
   type state = | Playing | Gameover;
   type t = {
@@ -438,17 +426,3 @@ let tick () => {
     | Some g => game := Some (Game.tick g)
   };
 };
-/*  */
-/* for i in 0 to 35 { */
-/*   Js.log ("Move #" ^ (string_of_int i)); */
-/*   switch (!game) { */
-/*     | None => game := Some (Game.create dimension) */
-/*     | Some g => { */
-/*       game := Some (Game.tick g); */
-/*       switch (!game) { */
-/*         | Some g => Board.print g.board; */
-/*         | None => () */
-/*         } */
-/*     } */
-/*   }; */
-/* }; */
