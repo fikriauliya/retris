@@ -17,7 +17,6 @@ module Result = {
 
 module Matrix = {
   let multiply x y => {
-    /* https://rosettacode.org/wiki/Matrix_multiplication#OCaml */
     let x_width = Array.length x;
     let x_height = Array.length x.(0);
     let y_width = Array.length y;
@@ -100,15 +99,18 @@ module Tetromino = {
     shape: shape,
   };
 
-  let print t => {
-    let size = t.blocks |> List.fold_left 
+  let size t => 
+    t.blocks 
+    |> List.fold_left 
       (fun accum p => {
         let (x, y) = p;
         (max (max x accum) y)
-      })
-      0 |> (fun s => s + 1);
+      }) 0
+    |> (fun s => s + 1);
 
-    let m = Array.make_matrix size size 0;
+  let print t => {
+    let s = size t;
+    let m = Array.make_matrix s s 0;
     t.blocks |> List.iter (fun p => {
       let (x, y) = p;
       m.(x).(y) = 1;
@@ -185,18 +187,17 @@ module Board = {
     tetrominos_on_board: list tetromino_on_board,
     dimension: dimension
   };
-  type movement = | Moved t | Collide | NoActiveTetromino;
+  type movement = | Moved t | Collide | Still | NoActiveTetromino | Full;
+  type collision = | Intersection (list position) | HitBottom | HitLeftRight | NoCollision;
 
   let create dimension => { tetrominos_on_board: [], dimension };
 
-  let in_bound t ((x, y):position) => {
+  let in_moveable_space t ((x, y):position) => {
     let (width, height) = t.dimension;
-    if (x < 0 || y < 0 || x >= width || y >= height) {
-      false;
-    } else {
-      true;
-    }
+    (x >= 0 && x < width && y < height);
   };
+
+  let in_board t ((x, y):position) => (y >= 0 && (in_moveable_space t (x, y)));
 
   let get_id_and_blocks t => {
     t.tetrominos_on_board
@@ -217,7 +218,7 @@ module Board = {
     let m = Array.make_matrix width height 0;
     t |> get_id_and_blocks |> List.iter (fun idb => {
       let (id, (x, y)) = idb;
-      if (in_bound t (x, y)) {
+      if (in_board t (x, y)) {
         m.(x).(y) = id;
       }
     });
@@ -238,21 +239,42 @@ module Board = {
       ...t,
       tetrominos_on_board: [new_tetromino_on_board]
     } |> List.map(extract_blocks);
-    Js.log "blocks1";
-    blocks1 |> (List.iter Block.print);
+    /* Js.log "blocks1"; */
+    /* blocks1 |> (List.iter Block.print); */
 
     let blocks2 = get_id_and_blocks {
       ...t,
       tetrominos_on_board: tetrominos_on_board
     } |> List.map(extract_blocks);
-    Js.log "blocks2";
-    blocks2 |> (List.iter Block.print);
+    /* Js.log "blocks2"; */
+    /* blocks2 |> (List.iter Block.print); */
 
-    let intersect = blocks1 |> List.exists(fun b => 
+    let intersections = blocks1 |> List.filter(fun b => 
       blocks2 |> List.exists(fun c => Block.equal b c));
 
-    let out_of_bound = blocks1 |> List.exists(fun b => b |> (in_bound t) |> (not));
-    intersect || out_of_bound;
+    let out_of_moveable_space = blocks1 
+      |> List.filter (fun b => b |> (in_moveable_space t) |> (not));
+      
+    if ((List.length intersections) > 0) {
+      Js.log "Intersect";
+      Intersection intersections;
+    } else if ((List.length out_of_moveable_space) > 0) {
+      let (_, height) = t.dimension;
+      /* Js.log "out_of_moveable_space"; */
+      /* out_of_moveable_space |> (List.iter Block.print); */
+      let does_hit_bottom = out_of_moveable_space 
+        |> List.exists (fun (_, y) => y == height);
+      if (does_hit_bottom) {
+        Js.log "HitBottom";
+        HitBottom;
+      } else {
+        Js.log "HitLeftRight";
+        HitLeftRight;
+      }
+    } else {
+      Js.log "NoCollision";
+      NoCollision;
+    }
   };
 
   let put t tetromino top_left_position => {
@@ -264,16 +286,25 @@ module Board = {
         | Fixed => true
       };
     });
-    if (does_collide t remainders new_tetromino_on_board) {
-      Js.log "Collide!";
-      Collide;
-    } else {
-      let b = {
-        ...t,
-        tetrominos_on_board: [new_tetromino_on_board, ...remainders]
-      };
-
-      Moved b;
+    switch (does_collide t remainders new_tetromino_on_board) {
+      | Intersection _ => {
+        Js.log "Collide!";
+        let (_, tl_y) = top_left_position;
+        if (tl_y < 0) {
+          Full;
+        } else {
+          Collide;
+        }
+      }
+      | HitLeftRight => Still
+      | HitBottom => Collide
+      | NoCollision => {
+        let b = {
+          ...t,
+          tetrominos_on_board: [new_tetromino_on_board, ...remainders]
+        };
+        Moved b;
+      }
     }
   };
 
@@ -323,14 +354,17 @@ module Board = {
 };
 
 module Game = {
+  type state = | Playing | Gameover;
   type t = {
     board: Board.t,
+    state: state
   };
 
   let create dimension => {
     Random.init 0;
     {
-      board: (Board.create dimension)
+      board: (Board.create dimension),
+      state: Playing
     };
   };
 
@@ -340,20 +374,27 @@ module Game = {
         let all_shapes = [|Tetromino.I, O, L, T, S|];
         let random_shape = all_shapes.(Random.int (Array.length all_shapes));
         let (width, _) = t.board.dimension;
-        Board.put t.board (Tetromino.create random_shape) (width / 2, 0);
+        let random_tetromino = Tetromino.create random_shape;
+        let rt_size = Tetromino.size random_tetromino;
+        Board.put t.board random_tetromino (width / 2, (-rt_size));
       }
       | Some _ => {
         Board.move_tetromino t.board Down;
       }
     };
     switch (m) {
-      | Moved board => { board: board }
-      | NoActiveTetromino  => t
+      | Moved board => { ...t, board }
+      | Still | NoActiveTetromino  => t
       | Collide => {
         let new_t = {
+          ...t,
           board: (Board.stop_active_tetromino t.board)
         };
         tick new_t
+      }
+      | Full => {
+        Js.log "Gameover!";
+        {...t, state: Gameover}
       }
     }
   };
@@ -363,7 +404,8 @@ let dimension = (10, 10);
 
 let () = {
   let game = ref (Game.create dimension);
-  for _ in 0 to 10 {
+  for i in 0 to 35 {
+    Js.log ("Move #" ^ (string_of_int i));
     game := Game.tick !game;
     Board.print (!game).board;
   }
