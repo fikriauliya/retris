@@ -378,7 +378,28 @@ module Game = {
     };
   };
 
-  let rec tick (t: t) :t => {
+  let rec update t (m:Board.movement) direction => {
+    switch (m) {
+      | Moved board => { ...t, board }
+      | Still | NoActiveTetromino  => t
+      | Collide => {
+        switch (direction) {
+          | Down => {
+            let new_t = {
+              ...t,
+              board: (Board.stop_active_tetromino t.board)
+            };
+            tick new_t
+          }
+          | Left | Right => t
+        }
+      }
+      | Full => {
+        Js.log "Gameover!";
+        {...t, state: Gameover}
+      }
+    }
+  } and tick (t: t) :t => {
     let m = switch (Board.active_tetromino t.board) {
       | None => {
         let all_shapes = [|Tetromino.I, O, L, T, S|];
@@ -392,25 +413,13 @@ module Game = {
         Board.move_tetromino t.board Down;
       }
     };
-    switch (m) {
-      | Moved board => { ...t, board }
-      | Still | NoActiveTetromino  => t
-      | Collide => {
-        let new_t = {
-          ...t,
-          board: (Board.stop_active_tetromino t.board)
-        };
-        tick new_t
-      }
-      | Full => {
-        Js.log "Gameover!";
-        {...t, state: Gameover}
-      }
-    }
+    update t m Down;
   };
 
   let rotate t => t;
-  let move t direction => t;
+  let move t direction => {
+    update t (Board.move_tetromino t.board direction) direction;
+  };
 
   let matrix t => Board.matrix t.board
 };
