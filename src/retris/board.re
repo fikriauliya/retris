@@ -6,7 +6,8 @@ let make ::board _children => {
     let m = Engine.Board.matrix board;
     let m' = Engine.Matrix.transpose m;
 
-    <table>
+    <table style=(
+      ReactDOMRe.Style.make border::"2px solid black" ())>
       <tbody>
         (ReasonReact.arrayToElement (m' |> Array.mapi (fun y row => {
           <tr key=(string_of_int y)>
