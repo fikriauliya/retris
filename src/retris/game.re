@@ -2,7 +2,7 @@ type state = {
   game: option Engine.Game.t,
   timer_id: ref (option Js.Global.intervalId)
 };
-type action = | Tick | ClickLeft | ClickRight | ClickRotate | Restart;
+type action = | Tick | ClickLeft | ClickRight | ClickRotate | Restart | PressKey string;
 
 let component = ReasonReact.reducerComponent "Game";
 
@@ -21,6 +21,14 @@ let make  _children => {
         | ClickLeft => Engine.Game.move g Left
         | ClickRight => Engine.Game.move g Right
         | ClickRotate => Engine.Game.rotate g
+        | PressKey key => {
+          switch (key) {
+            | "h" | "H" => Engine.Game.move g Left
+            | "l" | "L" => Engine.Game.move g Right
+            | "j" | "J" => Engine.Game.tick g
+            | "k" | "K" => Engine.Game.rotate g
+          };
+          }
         | Restart => Engine.Game.create (10, 10)
         }
       }
@@ -41,6 +49,7 @@ let make  _children => {
           <button onClick=(self.reduce (fun _event => ClickRotate))> (ReasonReact.stringToElement "o") </button>
           <button onClick=(self.reduce (fun _event => ClickRight))> (ReasonReact.stringToElement ">") </button>
           <button onClick=(self.reduce (fun _event => Restart))> (ReasonReact.stringToElement "#?!?") </button>
+          <input onKeyPress=(self.reduce (fun event => (PressKey (ReactEventRe.Keyboard.key event)))) />
         </div>
       }
     }
