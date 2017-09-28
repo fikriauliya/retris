@@ -11,7 +11,10 @@ let make ::board _children => {
         (ReasonReact.arrayToElement (m' |> Array.mapi (fun y row => {
           <tr key=(string_of_int y)>
             (ReasonReact.arrayToElement (row |> Array.mapi (fun x e => {
-              <td key=(string_of_int x)> (ReasonReact.stringToElement (string_of_int e)) </td>
+              let filled_in = e > 0;
+              let color = filled_in ? "blue" : "white";
+              <td key=(string_of_int x) style=(
+                ReactDOMRe.Style.make color::color ())> (ReasonReact.stringToElement ("x")) </td>
             })))
           </tr>
         })))
