@@ -196,7 +196,7 @@ module Tetromino = {
     blocks: t.blocks |> List.filter (fun b => not (Block.equal b block))
   };
   let move_down_blocks_above (t:t) (by) => {
-    Js.log ("move_down_blocks_above " ^ (string_of_int by));
+    /* Js.log ("move_down_blocks_above " ^ (string_of_int by)); */
     /* Block.print block; */
     /* print t; */
     /* let (bx, by) = block; */
@@ -402,17 +402,20 @@ module Board = {
       |> Array.to_list 
       |> List.filter (fun (_, count) => count == width)
       |> List.map (fun (i, _) => i);
-    Js.log "Full_rows:";
-    full_rows |> List.iter (fun l => Js.log l);
+    full_rows |> List.iter (fun l => Js.log ("Full Row: " ^ (string_of_int l)));
 
+    if ((List.length full_rows) > 0) {
+      Js.log "remove_lines";
+      print t;
+    };
     let tobs' = t.tetrominos_on_board |> List.map(fun tob => {
       let tetromino = tob.tetromino;
       let (_, dis_y) = tob.top_left_position;
 
       let tetromino' = full_rows |> (List.fold_left (fun (tet: Tetromino.t) full_row => {
-        Js.log ("Row:" ^ (string_of_int full_row));
-        Js.log ("dis_y" ^ (string_of_int dis_y));
-        Tetromino.print tet;
+        /* Js.log ("Row:" ^ (string_of_int full_row)); */
+        /* Js.log ("dis_y" ^ (string_of_int dis_y)); */
+        /* Tetromino.print tet; */
         let to_be_deleted_blocks = tet.blocks
           |> List.filter (fun (_, y) => y + dis_y == full_row);
 
@@ -420,13 +423,13 @@ module Board = {
           |> (List.fold_left (fun accum b => {
             b |> (Tetromino.delete_block accum);
             }) tet);
-        Js.log "Deleted";
-        Tetromino.print tetromino';
+        /* Js.log "Deleted"; */
+        /* Tetromino.print tetromino'; */
 
         let tetromino' = Tetromino.move_down_blocks_above tetromino' (full_row - dis_y);
 
-        Js.log "Moved down";
-        Tetromino.print tetromino';
+        /* Js.log "Moved down"; */
+        /* Tetromino.print tetromino'; */
         tetromino';
       }) tetromino);
       {
@@ -434,10 +437,14 @@ module Board = {
         tetromino: tetromino'
       }
     });
-    {
+    let res = {
       ...t,
       tetrominos_on_board: tobs'
-    }
+    };
+    if ((List.length full_rows) > 0) {
+      print res;
+    };
+    res;
   }
 };
 
@@ -473,7 +480,7 @@ module Game = {
         }
       }
       | Full => {
-        Js.log "Gameover!";
+        /* Js.log "Gameover!"; */
         {...t, state: Gameover}
       }
     }

@@ -14,7 +14,7 @@ let make  _children => {
   },
   reducer: fun action state => {
     let new_game = switch (state.game) {
-      | None => Some (Engine.Game.create (10, 10))
+      | None => Some (Engine.Game.create (10, 15))
       | Some g => {
         switch action {
         | Tick => Some (Engine.Game.tick g)
@@ -40,7 +40,7 @@ let make  _children => {
     };
   },
   didMount: fun self => {
-    self.state.timer_id := Some (Js.Global.setInterval (self.reduce (fun _ => Tick)) 500);
+    self.state.timer_id := Some (Js.Global.setInterval (self.reduce (fun _ => Tick)) 300);
     ReasonReact.NoUpdate
   },
   render: fun self =>
@@ -48,12 +48,20 @@ let make  _children => {
       | None => <div/>
       | Some g => {
         <div>
-          <Board board=g.board/>
-          <button onClick=(self.reduce (fun _event => ClickLeft))> (ReasonReact.stringToElement "<") </button>
-          <button onClick=(self.reduce (fun _event => ClickRotate))> (ReasonReact.stringToElement "o") </button>
-          <button onClick=(self.reduce (fun _event => ClickRight))> (ReasonReact.stringToElement ">") </button>
-          <button onClick=(self.reduce (fun _event => Restart))> (ReasonReact.stringToElement "#?!?") </button>
-          <input onKeyPress=(self.reduce (fun event => (PressKey (ReactEventRe.Keyboard.key event)))) />
+          (switch (g.state) {
+            | Gameover =>
+              <div> (ReasonReact.stringToElement "Gameover") </div>
+            | Playing => {
+              <div>
+                <Board board=g.board/>
+                <button onClick=(self.reduce (fun _event => ClickLeft))> (ReasonReact.stringToElement "<") </button>
+                <button onClick=(self.reduce (fun _event => ClickRotate))> (ReasonReact.stringToElement "o") </button>
+                <button onClick=(self.reduce (fun _event => ClickRight))> (ReasonReact.stringToElement ">") </button>
+                <input autoFocus=(Js.Boolean.to_js_boolean true) placeholder="hjkl" onKeyDown=(self.reduce (fun event => (PressKey (ReactEventRe.Keyboard.key event)))) />
+              </div>
+            }
+          })
+          <button onClick=(self.reduce (fun _event => Restart))> (ReasonReact.stringToElement "Restart") </button>
         </div>
       }
     }

@@ -1,4 +1,6 @@
 let component = ReasonReact.statelessComponent "BoardComponent";
+let basic_colors = [|"#C0C0C0", "#808080", "#000000", "#FF0000", "#800000", "#FFFF00", "#808000", "#00FF00", "#008000",
+"#00FFFF", "#008080", "#0000FF", "#000080", "#FF00FF", "#800080"|];
 
 let make ::board _children => {
   ...component,
@@ -13,9 +15,14 @@ let make ::board _children => {
           <tr key=(string_of_int y)>
             (ReasonReact.arrayToElement (row |> Array.mapi (fun x e => {
               let filled_in = e > 0;
-              let color = filled_in ? "blue" : "white";
+              let backgroundColor = filled_in ? basic_colors.(e mod (Array.length basic_colors)) : "white";
               <td key=(string_of_int x) style=(
-                ReactDOMRe.Style.make color::color ())> (ReasonReact.stringToElement ("x")) </td>
+                ReactDOMRe.Style.make 
+                  backgroundColor::backgroundColor
+                  width::"20px"
+                  height::"20px"
+                  ())
+               >  </td>
             })))
           </tr>
         })))
