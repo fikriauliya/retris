@@ -30,7 +30,7 @@ let make  _children => {
             | _ => None
           };
           }
-        | Restart => Some (Engine.Game.create (10, 10))
+        | Restart => Some (Engine.Game.create (10, 15))
         }
       }
     };
