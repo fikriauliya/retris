@@ -194,6 +194,19 @@ module Tetromino = {
   let delete_block t block => {
     ...t,
     blocks: t.blocks |> List.filter (fun b => not (Block.equal b block))
+  };
+  let move_down_blocks_above (t:t) (by) => {
+    Js.log ("move_down_blocks_above " ^ (string_of_int by));
+    /* Block.print block; */
+    /* print t; */
+    /* let (bx, by) = block; */
+    let res = {
+      ...t,
+      blocks: t.blocks 
+        |> List.map (fun (x, y) => (y < by) ? (x, y + 1) : (x, y))
+    };
+    /* print res; */
+    res;
   }
 };
 
@@ -272,21 +285,21 @@ module Board = {
       |> List.filter (fun b => b |> (in_moveable_space t) |> (not));
       
     if ((List.length intersections) > 0) {
-      Js.log "Intersect";
+      /* Js.log "Intersect"; */
       Intersection intersections;
     } else if ((List.length out_of_moveable_space) > 0) {
       let (_, height) = t.dimension;
       let does_hit_bottom = out_of_moveable_space 
         |> List.exists (fun (_, y) => y == height);
       if (does_hit_bottom) {
-        Js.log "HitBottom";
+        /* Js.log "HitBottom"; */
         HitBottom;
       } else {
-        Js.log "HitLeftRight";
+        /* Js.log "HitLeftRight"; */
         HitLeftRight;
       }
     } else {
-      Js.log "NoCollision";
+      /* Js.log "NoCollision"; */
       NoCollision;
     }
   };
@@ -302,7 +315,7 @@ module Board = {
     });
     switch (does_collide t remainders new_tetromino_on_board) {
       | Intersection _ => {
-        Js.log "Collide!";
+        /* Js.log "Collide!"; */
         let (_, tl_y) = top_left_position;
         if (tl_y < 0) {
           Full;
@@ -397,12 +410,23 @@ module Board = {
       let (_, dis_y) = tob.top_left_position;
 
       let tetromino' = full_rows |> (List.fold_left (fun (tet: Tetromino.t) full_row => {
+        Js.log ("Row:" ^ (string_of_int full_row));
+        Js.log ("dis_y" ^ (string_of_int dis_y));
+        Tetromino.print tet;
         let to_be_deleted_blocks = tet.blocks
           |> List.filter (fun (_, y) => y + dis_y == full_row);
 
-        let tetromino' = to_be_deleted_blocks |> 
-          (List.fold_left (fun accum b => Tetromino.delete_block accum b) tet);
+        let tetromino' = to_be_deleted_blocks 
+          |> (List.fold_left (fun accum b => {
+            b |> (Tetromino.delete_block accum);
+            }) tet);
+        Js.log "Deleted";
+        Tetromino.print tetromino';
 
+        let tetromino' = Tetromino.move_down_blocks_above tetromino' (full_row - dis_y);
+
+        Js.log "Moved down";
+        Tetromino.print tetromino';
         tetromino';
       }) tetromino);
       {
@@ -425,7 +449,7 @@ module Game = {
   };
 
   let create dimension => {
-    Random.init 0;
+    Random.self_init ();
     {
       board: (Board.create dimension),
       state: Playing
