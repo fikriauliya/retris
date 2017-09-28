@@ -191,6 +191,10 @@ module Tetromino = {
   };
 
   let freeze t => { ...t, klazz: Fixed};
+  let delete_block t block => {
+    ...t,
+    blocks: t.blocks |> List.filter (fun b => not (Block.equal b block))
+  }
 };
 
 module Board = {
@@ -372,6 +376,45 @@ module Board = {
       | None => NoActiveTetromino;
       }
   };
+
+  let remove_lines (t:t) => {
+    let (width, _) = t.dimension;
+    let full_rows = t 
+      |> matrix 
+      |> Matrix.transpose 
+      |> Array.mapi (fun i row => {
+        let block_in_row = row |> Array.fold_left (fun accum x => (x != 0) ? accum + 1 : accum) 0;
+        (i, block_in_row);
+      }) 
+      |> Array.to_list 
+      |> List.filter (fun (_, count) => count == width)
+      |> List.map (fun (i, _) => i);
+    Js.log "Full_rows:";
+    full_rows |> List.iter (fun l => Js.log l);
+
+    let tobs' = t.tetrominos_on_board |> List.map(fun tob => {
+      let tetromino = tob.tetromino;
+      let (_, dis_y) = tob.top_left_position;
+
+      let tetromino' = full_rows |> (List.fold_left (fun (tet: Tetromino.t) full_row => {
+        let to_be_deleted_blocks = tet.blocks
+          |> List.filter (fun (_, y) => y + dis_y == full_row);
+
+        let tetromino' = to_be_deleted_blocks |> 
+          (List.fold_left (fun accum b => Tetromino.delete_block accum b) tet);
+
+        tetromino';
+      }) tetromino);
+      {
+        ...tob,
+        tetromino: tetromino'
+      }
+    });
+    {
+      ...t,
+      tetrominos_on_board: tobs'
+    }
+  }
 };
 
 module Game = {
@@ -398,7 +441,7 @@ module Game = {
           | Down => {
             let new_t = {
               ...t,
-              board: (Board.stop_active_tetromino t.board)
+              board: (Board.remove_lines (Board.stop_active_tetromino t.board))
             };
             tick new_t
           }
