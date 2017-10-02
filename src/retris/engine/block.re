@@ -12,7 +12,12 @@ let from_matrix m => {
 
 let rotate t origin => {
   let m_t = to_matrix t; let m_origin = to_matrix origin;
-  let m' = Matrix.add m_origin (Matrix.multiply Matrix.rotation_matrix (Matrix.substract m_t m_origin));
+  let rotation_matrix = {
+    let m = Array.make_matrix 2 2 0;
+    m.(0).(0) = 0; m.(1).(0) = 1; m.(0).(1) = -1; m.(1).(1) = 0;
+    m
+  };
+  let m' = Matrix.add m_origin (Matrix.multiply rotation_matrix (Matrix.substract m_t m_origin));
   from_matrix m'
 };
 

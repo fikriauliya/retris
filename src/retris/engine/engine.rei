@@ -7,5 +7,3 @@ let create: Coordinate.dimension => t;
 let tick: t => t;
 let rotate: t => t;
 let move: t => Board.direction => t;
-/* let start: unit => unit; */
-/* let tick: unit => unit; */

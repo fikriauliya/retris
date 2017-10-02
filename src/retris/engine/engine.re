@@ -52,19 +52,3 @@ let rec update t (m:Board.movement) direction => {
 
 let rotate t => update t (Board.rotate_tetromino t.board) Down;
 let move t direction => update t (Board.move_tetromino t.board direction) direction;
-let matrix t => Board.matrix t.board
-
-/* let dimension = (10, 10); */
-/*  */
-/* let game = ref None; */
-/*  */
-/* let start () => { */
-/*   game := Some (Game.create dimension); */
-/* }; */
-/*  */
-/* let tick () => { */
-/*   switch (!game) { */
-/*     | None => start () */
-/*     | Some g => game := Some (Game.tick g) */
-/*   }; */
-/* }; */

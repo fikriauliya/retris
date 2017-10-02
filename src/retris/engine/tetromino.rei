@@ -13,7 +13,6 @@ type t = {
 
 let size: t => int;
 let print: t => unit;
-let id: ref int;
 let create: shape => t;
 let rotate: t => t;
 let freeze: t => t;

@@ -31,12 +31,6 @@ let print m => {
   };
 };
 
-let rotation_matrix = {
-  let m = Array.make_matrix 2 2 0;
-  m.(0).(0) = 0; m.(1).(0) = 1; m.(0).(1) = -1; m.(1).(1) = 0;
-  m
-};
-
 let transpose m => {
   let (width, height) = ((Array.length m), Array.length m.(0));
   let m' = Array.make_matrix height width 0;
