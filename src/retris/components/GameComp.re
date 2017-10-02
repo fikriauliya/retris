@@ -1,5 +1,5 @@
 type state = { 
-  game: option Engine.Game.t,
+  game: option Engine.t,
   timer_id: ref (option Js.Global.intervalId)
 };
 type action = | Tick | ClickLeft | ClickRight | ClickRotate | Restart | PressKey string;
@@ -14,23 +14,23 @@ let make  _children => {
   },
   reducer: fun action state => {
     let new_game = switch (state.game) {
-      | None => Some (Engine.Game.create (10, 15))
+      | None => Some (Engine.create (10, 15))
       | Some g => {
         switch action {
-        | Tick => Some (Engine.Game.tick g)
-        | ClickLeft => Some (Engine.Game.move g Left)
-        | ClickRight => Some (Engine.Game.move g Right)
-        | ClickRotate => Some (Engine.Game.rotate g)
+        | Tick => Some (Engine.tick g)
+        | ClickLeft => Some (Engine.move g Left)
+        | ClickRight => Some (Engine.move g Right)
+        | ClickRotate => Some (Engine.rotate g)
         | PressKey key => {
           switch (key) {
-            | "h" | "H" => Some (Engine.Game.move g Left)
-            | "l" | "L" => Some (Engine.Game.move g Right)
-            | "j" | "J" => Some (Engine.Game.tick g)
-            | "k" | "K" => Some (Engine.Game.rotate g)
+            | "h" | "H" => Some (Engine.move g Left)
+            | "l" | "L" => Some (Engine.move g Right)
+            | "j" | "J" => Some (Engine.tick g)
+            | "k" | "K" => Some (Engine.rotate g)
             | _ => None
           };
           }
-        | Restart => Some (Engine.Game.create (10, 15))
+        | Restart => Some (Engine.create (10, 15))
         }
       }
     };
@@ -53,7 +53,7 @@ let make  _children => {
               <div> (ReasonReact.stringToElement "Gameover") </div>
             | Playing => {
               <div>
-                <Board board=g.board/>
+                <BoardComp board=g.board/>
                 <button onClick=(self.reduce (fun _event => ClickLeft))> (ReasonReact.stringToElement "<") </button>
                 <button onClick=(self.reduce (fun _event => ClickRotate))> (ReasonReact.stringToElement "o") </button>
                 <button onClick=(self.reduce (fun _event => ClickRight))> (ReasonReact.stringToElement ">") </button>

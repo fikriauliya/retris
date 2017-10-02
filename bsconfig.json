@@ -10,7 +10,7 @@
   "sources": [
     {
       "dir": "src",
-      "subdirs": ["retris"]
+      "subdirs": ["retris", "retris/components", "retris/engine"]
     }
   ],
   "namespace": true,

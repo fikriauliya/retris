@@ -5,8 +5,8 @@ let basic_colors = [|"#C0C0C0", "#808080", "#000000", "#FF0000", "#800000", "#FF
 let make ::board _children => {
   ...component,
   render: fun _self => {
-    let m = Engine.Board.matrix board;
-    let m' = Engine.Matrix.transpose m;
+    let m = Board.matrix board;
+    let m' = Matrix.transpose m;
 
     <table style=(
       ReactDOMRe.Style.make border::"2px solid black" ())>
