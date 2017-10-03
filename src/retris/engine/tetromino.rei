@@ -15,6 +15,7 @@ type t = {
   id: int,
   blocks: list Block.t,
   tetromino_type,
+  top_left_position: Coordinate.position,
   shape
 };
 
@@ -31,3 +32,5 @@ let freeze: t => t;
 let delete_block: t => Block.t => t;
 
 let move_down_blocks_above: t => int => t;
+
+let absolute_blocks: t => list Block.t;

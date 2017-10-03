@@ -35,12 +35,12 @@ and tick (t: t) :t => {
   let m =
     switch (Board.active_tetromino t.board) {
     | None =>
-      let all_shapes = [|Tetromino.I, O, L, T, S|];
+      let all_shapes = [|Tetromino.I, O, L, T, S, J, Z|];
       let random_shape = all_shapes.(Random.int (Array.length all_shapes));
       let (width, _) = t.board.dimension;
       let random_tetromino = Tetromino.create random_shape;
       let rt_size = Tetromino.size random_tetromino;
-      Board.put t.board random_tetromino (width / 2, - rt_size)
+      Board.put t.board {...random_tetromino, top_left_position: (width / 2, - rt_size)}
     | Some _ => Board.move_tetromino t.board Down
     };
   update t m Down

@@ -15,6 +15,7 @@ type t = {
   id: int,
   blocks: list Block.t,
   tetromino_type,
+  top_left_position: Coordinate.position,
   shape
 };
 
@@ -37,36 +38,36 @@ let create (shape: shape) => {
     /* 0000 */
     /* 0000 */
     /* 1111 */
-    {id: !id, blocks: [(0, 3), (1, 3), (2, 3), (3, 3)], tetromino_type: Moveable, shape}
+    {id: !id, blocks: [(0, 3), (1, 3), (2, 3), (3, 3)], tetromino_type: Moveable, shape, top_left_position: (0, 0)}
   | O =>
     /* 11 */
     /* 11 */
-    {id: !id, blocks: [(0, 0), (0, 1), (1, 0), (1, 1)], tetromino_type: Moveable, shape}
+    {id: !id, blocks: [(0, 0), (0, 1), (1, 0), (1, 1)], tetromino_type: Moveable, shape, top_left_position: (0, 0)}
   | L =>
     /* 100 */
     /* 100 */
     /* 110 */
-    {id: !id, blocks: [(0, 0), (0, 1), (0, 2), (1, 2)], tetromino_type: Moveable, shape}
+    {id: !id, blocks: [(0, 0), (0, 1), (0, 2), (1, 2)], tetromino_type: Moveable, shape, top_left_position: (0, 0)}
   | T =>
     /* 000 */
     /* 010 */
     /* 111 */
-    {id: !id, blocks: [(0, 2), (1, 2), (2, 2), (1, 1)], tetromino_type: Moveable, shape}
+    {id: !id, blocks: [(0, 2), (1, 2), (2, 2), (1, 1)], tetromino_type: Moveable, shape, top_left_position: (0, 0)}
   | S =>
     /* 000 */
     /* 011 */
     /* 110 */
-    {id: !id, blocks: [(0, 2), (1, 2), (1, 1), (2, 1)], tetromino_type: Moveable, shape}
+    {id: !id, blocks: [(0, 2), (1, 2), (1, 1), (2, 1)], tetromino_type: Moveable, shape, top_left_position: (0, 0)}
   | J =>
     /* 010 */
     /* 010 */
     /* 110 */
-    {id: !id, blocks: [(1, 0), (1, 1), (0, 2), (1, 2)], tetromino_type: Moveable, shape}
+    {id: !id, blocks: [(1, 0), (1, 1), (0, 2), (1, 2)], tetromino_type: Moveable, shape, top_left_position: (0, 0)}
   | Z =>
     /* 000 */
     /* 110 */
     /* 011 */
-    {id: !id, blocks: [(2, 2), (1, 2), (1, 1), (0, 1)], tetromino_type: Moveable, shape}
+    {id: !id, blocks: [(2, 2), (1, 2), (1, 1), (0, 1)], tetromino_type: Moveable, shape, top_left_position: (0, 0)}
   }
 };
 
@@ -112,3 +113,8 @@ let move_down_blocks_above t block_y => {
   ...t,
   blocks: t.blocks |> List.map (fun (x, y) => y < block_y ? (x, y + 1) : (x, y))
 };
+
+let absolute_blocks t => {
+   let (dis_x, dis_y) = t.top_left_position;
+   t.blocks |> List.map (fun (x, y) => (x + dis_x, y + dis_y))
+}

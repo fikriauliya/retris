@@ -1,10 +1,5 @@
-type tetromino_on_board = {
-  tetromino: Tetromino.t,
-  top_left_position: Coordinate.position
-};
-
 type t = {
-  tetrominos_on_board: list tetromino_on_board,
+  tetrominos: list Tetromino.t,
   dimension: Coordinate.dimension
 };
 
@@ -30,9 +25,9 @@ let create: Coordinate.dimension => t;
 
 let matrix: t => Matrix.t;
 
-let put: t => Tetromino.t => Coordinate.position => movement;
+let put: t => Tetromino.t => movement;
 
-let active_tetromino: t => option tetromino_on_board;
+let active_tetromino: t => option Tetromino.t;
 
 let stop_active_tetromino: t => t;
 
