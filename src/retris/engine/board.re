@@ -30,12 +30,12 @@ type id_and_block = (int, Block.t);
 
 let create dimension => {tetrominos_on_board: [], dimension};
 
-let in_moveable_space t ((x, y): Coordinate.position) => {
+let in_moveable_space t (x, y) => {
   let (width, height) = t.dimension;
   x >= 0 && x < width && y < height
 };
 
-let in_board t ((x, y): Coordinate.position) => y >= 0 && in_moveable_space t (x, y);
+let in_board t (x, y) => y >= 0 && in_moveable_space t (x, y);
 
 let get_id_and_blocks t :list id_and_block =>
   t.tetrominos_on_board
@@ -43,13 +43,7 @@ let get_id_and_blocks t :list id_and_block =>
        fun tob => {
          let tetromino = tob.tetromino;
          let (dis_x, dis_y) = tob.top_left_position;
-         tetromino.blocks
-         |> List.map (
-              fun block => {
-                let (x, y) = block;
-                (tetromino.id, (x + dis_x, y + dis_y))
-              }
-            )
+         tetromino.blocks |> List.map (fun (x, y) => (tetromino.id, (x + dis_x, y + dis_y)))
        }
      )
   |> List.concat;
@@ -57,30 +51,25 @@ let get_id_and_blocks t :list id_and_block =>
 let matrix t => {
   let (width, height) = t.dimension;
   let m = Array.make_matrix width height 0;
-  t
-  |> get_id_and_blocks
+  get_id_and_blocks t
   |> List.iter (
-       fun idb => {
-         let (id, (x, y)) = idb;
+       fun (id, (x, y)) =>
          if (in_board t (x, y)) {
            m.(x).(y) = id
          }
-       }
      );
   m
 };
 
 let print t => Matrix.print (matrix t);
 
-let does_collide t tetrominos_on_board new_tetromino_on_board => {
+let does_collide t tob1 tob2 => {
   let extract_blocks idb => {
     let (_, (x, y)) = idb;
     (x, y)
   };
-  let blocks1 =
-    get_id_and_blocks {...t, tetrominos_on_board: [new_tetromino_on_board]}
-    |> List.map extract_blocks;
-  let blocks2 = get_id_and_blocks {...t, tetrominos_on_board} |> List.map extract_blocks;
+  let blocks1 = get_id_and_blocks {...t, tetrominos_on_board: [tob2]} |> List.map extract_blocks;
+  let blocks2 = get_id_and_blocks {...t, tetrominos_on_board: tob1} |> List.map extract_blocks;
   let intersections =
     blocks1 |> List.filter (fun b => blocks2 |> List.exists (fun c => Block.equal b c));
   let out_of_moveable_space = blocks1 |> List.filter (fun b => b |> in_moveable_space t |> not);

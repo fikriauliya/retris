@@ -1,8 +1,7 @@
 type t = Coordinate.position;
 
-let to_matrix t => {
+let to_matrix (x, y) => {
   let m = Array.make_matrix 1 2 0;
-  let (x, y) = t;
   m.(0) = [|x, y|];
   m
 };
@@ -28,8 +27,7 @@ let rotate t origin => {
   from_matrix m'
 };
 
-let scale t ::factor => {
-  let (x, y) = t;
+let scale (x, y) ::factor => {
   (int_of_float (factor *. float x), int_of_float (factor *. float y))
 };
 

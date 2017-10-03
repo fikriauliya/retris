@@ -96,12 +96,8 @@ let rotate t => {
     blocks:
       t.blocks
       |> List.map (Block.scale factor::scale_factor)
-      |> (
-        fun blocks =>
-          blocks
-          |> List.map (fun b => Block.rotate b origin)
-          |> List.map (Block.scale factor::(1.0 /. scale_factor))
-      )
+      |> List.map (fun b => Block.rotate b origin)
+      |> List.map (Block.scale factor::(1.0 /. scale_factor))
   }
 };
 
@@ -112,7 +108,7 @@ let delete_block t block => {
   blocks: t.blocks |> List.filter (fun b => not (Block.equal b block))
 };
 
-let move_down_blocks_above (t: t) by => {
+let move_down_blocks_above t block_y => {
   ...t,
-  blocks: t.blocks |> List.map (fun (x, y) => y < by ? (x, y + 1) : (x, y))
+  blocks: t.blocks |> List.map (fun (x, y) => y < block_y ? (x, y + 1) : (x, y))
 };
